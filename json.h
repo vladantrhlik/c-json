@@ -3,6 +3,7 @@
 
 typedef struct the_c_json {
 	struct the_c_json *next, *prev;
+	char *key;
 	union value {
 		float number;
 		char *string;
