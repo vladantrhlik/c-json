@@ -8,17 +8,6 @@
 #define FALSE (0)
 #define MAX_STRLEN (256)
 
-/* starts of json parts */
-int is_obj_start(char c) { return c == '{'; }
-
-int is_array_start(char c) { return c == '['; }
-
-int is_number_start(char c) { return c == '-' || isdigit(c); }
-
-int is_string_start(char c) { return c == '"' || c == '\''; }
-
-int is_white_space(char c) { return isspace(c); }
-
 /**
  * Load json object
  * @param obj object on same level to connect new object to
@@ -34,7 +23,19 @@ c_json *json_load_obj(c_json *obj, FILE *file);
  */
 char json_load_whitespace(FILE *file);
 
+/**
+ * Read string between "" or ''
+ * @param file data input stream
+ */
 char *json_load_string(FILE *file);
+
+/**
+ * Read value (string/number/array/object/true/false/null) and store it in c_json object
+ * @param obj object to store value in
+ * @param file data input stream
+ */
+void json_load_value(c_json *obj, FILE *file);
+
 
 c_json *json_load(char *file_name) {
 	FILE *file = fopen(file_name, "r");
@@ -87,6 +88,45 @@ char *json_load_string(FILE *file) {
 	return new_str;
 }
 
+void json_load_value(c_json *obj, FILE *file) {
+	if (!obj || !file) return;
+
+	char c = fgetc(file);
+	ungetc(c, file);
+
+	switch (c) {
+		case '{':
+			obj->value_type = OBJECT;
+			obj->object = json_load_obj(NULL, file);
+			return;
+		case '"':
+		case '\'':
+			obj->value_type = STRING;
+			obj->string = json_load_string(file);
+			return;
+		case '[':
+			obj->value_type = ARRAY;
+			printf("arrays not implemented\n");
+			return;
+	}
+
+	// check true, false, null
+	// read until non-alpha char
+	char buffer[MAX_STRLEN];
+	char *b = buffer;
+	while ((c = fgetc(file)) != EOF && b - buffer < MAX_STRLEN) {
+		if (!isalpha(c)) {
+			ungetc(c, file);
+			break;
+		}
+		*b = c;
+		b++;
+	}
+	*b = '\0';
+
+	printf("special key value: %s\n", buffer);
+}
+
 c_json *json_load_obj(c_json *obj, FILE *file) {
 	c_json *new_obj = calloc(1, sizeof(c_json));
 	char c;
@@ -114,9 +154,10 @@ c_json *json_load_obj(c_json *obj, FILE *file) {
 		free(obj);
 		return NULL;
 	}
-
-	json_load_whitespace(file);
+	fgetc(file); // remove ':'
+	json_load_whitespace(file); 
 	// load value
+	json_load_value(obj, file);
 
 	return obj;
 }
