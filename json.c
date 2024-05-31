@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TRUE (1)
-#define FALSE (0)
 #define MAX_STRLEN (256)
 
 /**
@@ -28,6 +26,13 @@ char json_load_whitespace(FILE *file);
  * @param file data input stream
  */
 char *json_load_string(FILE *file);
+
+/**
+ * Read number (int / float) and save it into obj
+ * @param obj object to save value to
+ * @param file data input stream
+ */
+float json_load_number(c_json *obj, FILE *file);
 
 /**
  * Read value (string/number/array/object/true/false/null) and store it in c_json object
@@ -88,6 +93,26 @@ char *json_load_string(FILE *file) {
 	return new_str;
 }
 
+float json_load_number(c_json *obj, FILE *file) {
+	if (!obj || !file) return -1;
+
+	char buffer[MAX_STRLEN];
+	char *b = buffer;
+	char c;
+
+	// read whole number
+	while ( (c = fgetc(file)) != EOF && (isdigit(c) || c == '+' || c == '-' || c == '.')) {
+		*b = c;
+		b++;
+	}
+	*b = '\0';
+
+	float res = atof(buffer);
+	obj->value.number = res;
+
+	return res;
+}
+
 void json_load_array(FILE *file) {
 	if (!file) return;
 	char c;
@@ -103,19 +128,26 @@ void json_load_value(c_json *obj, FILE *file) {
 
 	switch (c) {
 		case '{':
-			obj->value_type = OBJECT;
-			obj->object = json_load_obj(NULL, file);
+			obj->value.type = OBJECT;
+			obj->value.object = json_load_obj(NULL, file);
 			return;
 		case '"':
 		case '\'':
-			obj->value_type = STRING;
-			obj->string = json_load_string(file);
+			obj->value.type = STRING;
+			obj->value.string = json_load_string(file);
 			return;
 		case '[':
-			obj->value_type = ARRAY;
+			obj->value.type = ARRAY;
 			printf("arrays not implemented\n");
 			json_load_array(file);
 			return;
+	}
+
+	// check if number
+	if (isdigit(c) || c == '+' || c == '-') {
+		obj->value.type = NUMBER;
+		json_load_number(obj, file);
+		return;
 	}
 
 	// check true, false, null
@@ -168,7 +200,6 @@ c_json *json_load_obj(c_json *obj, FILE *file) {
 
 		// load key value
 		obj->key = json_load_string(file);
-		printf("object '%s'\n", obj->key);
 
 		// read ':'
 		if ((c = json_load_whitespace(file)) != ':') {
@@ -181,7 +212,47 @@ c_json *json_load_obj(c_json *obj, FILE *file) {
 
 		// load value
 		json_load_value(obj, file);
+
+		// print for debug
 	}
 
 	return root_obj;
+}
+
+void json_print(c_json *obj, int indent) {
+	if (!obj) return;
+
+	for (int i = 0; i < indent; i++) printf("\t");
+
+	printf("'%s': ", obj->key);
+	switch (obj->value.type) {
+		case STRING:
+			printf("%s", obj->value.string);
+			break;
+		case NUMBER:
+			printf("%f", obj->value.number);
+			break;
+		case ARRAY:
+			printf("[]");
+			break;
+		case NONE:
+			printf("null");
+			break;
+		case TRUE:
+			printf("true");
+			break;
+		case FALSE:
+			printf("false");
+			break;
+		case OBJECT:
+			printf("{\n");
+			json_print(obj->value.object, indent + 1);
+			for (int i = 0; i < indent; i++) printf("\t");
+			printf("}");
+			break;
+	}
+	printf("\n");
+	if (obj->next) {
+		json_print(obj->next, indent);
+	}
 }

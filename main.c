@@ -11,6 +11,8 @@ int main(int argc, char *argv[]) {
 	char *file_name = argv[1];
 	c_json *json = json_load(file_name);
 
+	json_print(json, 0);
+
 	return EXIT_SUCCESS;
 }
 
