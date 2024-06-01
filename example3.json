@@ -1,0 +1,34 @@
+{
+	"arena": {
+		"time": {
+			"hours": 12,
+			"minutes": 42,
+			"seconds": 15.4
+		},
+		"weather": {
+			"rainy": false,
+			"cloudy": true,
+			"sunny": false,
+			"snowing": true
+		},
+		"vibe": "cool"
+	},
+	"players": [
+		{
+			"nickname": "valdosh",
+			"lvl": 42,
+			"items": [
+				{"name": "diamond sword", "health": 0.73},
+				{"name": "mechanical keyboard", "health": 0.99}
+			]
+		},
+		{
+			"nickname": "bob",
+			"lvl": 35,
+			"items": [
+				{"name": "medved", "health": 0.12},
+				{"name": "cisticka vzduchu ETA", "health": 0.45}
+			]
+		}
+	]
+}

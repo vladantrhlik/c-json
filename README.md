@@ -2,5 +2,5 @@
 
 ## TODO
 - [x] fix array structure
-- [ ] c_json iterator
-- [ ] get value by key
+- [x] c_json iterator
+- [x] get value by key

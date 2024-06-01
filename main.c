@@ -12,7 +12,15 @@ int main(int argc, char *argv[]) {
 	c_json *json = json_load(file_name);
 
 	json_print(json, 0);
+	
+	/*
+	c_json *players = json_find(json, "players");
+	printf("players %s found!\n", players ? "" : "not");
+	*/
 
-	return EXIT_SUCCESS;
+	// print all keys with iterator
+	printf("all found keys:\n");
+	for (c_json_iter *i = json_new_iter(json); json_iter_get(i); json_iter_next(&i)) {
+		printf("\'%s\'\n", json_iter_get(i)->key);
+	}
 }
-

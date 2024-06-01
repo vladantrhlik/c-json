@@ -39,6 +39,11 @@ float json_load_number(FILE *file);
  */
 void json_load_value(c_json_value *value, FILE *file);
 
+/**
+ * Load array or values
+ * @param value entry points of this array
+ * @param file data input stream
+ */
 void json_load_array(c_json_value *value, FILE *file);
 
 
@@ -111,7 +116,6 @@ float json_load_number(FILE *file) {
 }
 
 void json_load_array(c_json_value *value, FILE *file) {
-	printf("loading array\n");
 	if (!value || !file) return;
 
 	// create start of linked list
@@ -284,23 +288,54 @@ void json_print(c_json *obj, int indent) {
 	for (int i = 0; i < indent; i++) printf("\t");
 
 	printf("'%s': ", obj->key);
-	/*
-	if (obj->value.is_array) {
-		printf("[");
-		c_json_value *val = &obj->value;
-		while (val) {
-			json_print_value(val, indent);
-			if (val->next) printf(", ");
-			val = val->next;
-		}
-		printf("]");
-	} else {
-	*/
 	json_print_value(&obj->value, indent);
-
 	printf("\n");
 
 	if (obj->next) {
 		json_print(obj->next, indent);
 	}
 }
+
+c_json *json_find(c_json *json, char *key) {
+	if (!json) return NULL;
+
+	c_json *start = json;
+
+	// look in next keys
+	while (json) {
+		if (!strcmp(key, json->key)) return json;
+		json = json->next;
+	}
+
+	// look in prev keys
+	json = start->prev;
+
+	while (json) {
+		if (!strcmp(key, json->key)) return json;
+		json = json->prev;
+	}
+	return NULL;
+}
+
+c_json_iter *json_new_iter(c_json *json) {
+	if (!json) return NULL;
+	// traverse to start
+	while (json->prev) json = json->prev;
+	// create copy of first c_json
+	c_json_iter *iter = calloc(1, sizeof(c_json_iter));
+	if (!iter) return NULL;
+	memcpy(iter, json, sizeof(c_json));
+	return iter;
+}
+
+c_json *json_iter_next(c_json_iter **iter) {
+	if (!iter || !*iter) return NULL;
+	*iter = (*iter)->next;
+	return *((c_json**)iter);
+}
+
+c_json *json_iter_get(c_json_iter *iter) {
+	if (!iter) return NULL;
+	return (c_json*)iter;
+}
+
