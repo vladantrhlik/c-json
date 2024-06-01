@@ -18,6 +18,7 @@ typedef struct the_c_json_value{
 		float number;
 		char *string;
 		struct the_c_json *object;
+		struct the_c_json_value *array;
 	};
 
 	int is_array;

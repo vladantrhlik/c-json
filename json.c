@@ -111,13 +111,22 @@ float json_load_number(FILE *file) {
 }
 
 void json_load_array(c_json_value *value, FILE *file) {
+	printf("loading array\n");
 	if (!value || !file) return;
 
-	char c;
-	int count = 0;
+	// create start of linked list
+	value->array = calloc(1, sizeof(c_json_value));
+	if (!value->array) return;
+	value = value->array;
+
+	char c = fgetc(file);
+	if (c != '[') {
+		printf("Error: missing leading '[' when loading array");
+	}
+
 	while ( (c = json_load_whitespace(file)) != EOF && c != ']') {
-		if (c == '[') getc(file);
-		else if (c == ',') {
+
+		if (c == ',') {
 			fgetc(file);
 			// next value
 			c_json_value *next_value = calloc(1, sizeof(c_json_value));
@@ -126,9 +135,10 @@ void json_load_array(c_json_value *value, FILE *file) {
 
 			value->next = next_value;
 			value = next_value;
+			continue;
 		}
+
 		json_load_value(value, file);
-		count++;
 	}
 	getc(file); // remove ']'
 	return;
@@ -177,6 +187,10 @@ void json_load_value(c_json_value *value, FILE *file) {
 		b++;
 	}
 	*b = '\0';
+
+	if (!strcmp(buffer, "true")) value->type = TRUE;
+	if (!strcmp(buffer, "false")) value->type = FALSE;
+	if (!strcmp(buffer, "null")) value->type = NONE;
 }
 
 c_json *json_load_obj(c_json *obj, FILE *file) {
@@ -237,7 +251,14 @@ void json_print_value(c_json_value *value, int indent) {
 			printf("%f", value->number);
 			break;
 		case ARRAY:
-			printf("[]");
+			printf("[");
+			value = value->array;
+			while (value) {
+				json_print_value(value, indent);
+				if (value->next) printf(", ");
+				value = value->next;
+			}
+			printf("]");
 			break;
 		case NONE:
 			printf("null");
@@ -247,7 +268,7 @@ void json_print_value(c_json_value *value, int indent) {
 			break;
 		case FALSE:
 			printf("false");
-			break;
+			break; 
 		case OBJECT:
 			printf("{\n");
 			json_print(value->object, indent + 1);
@@ -263,6 +284,7 @@ void json_print(c_json *obj, int indent) {
 	for (int i = 0; i < indent; i++) printf("\t");
 
 	printf("'%s': ", obj->key);
+	/*
 	if (obj->value.is_array) {
 		printf("[");
 		c_json_value *val = &obj->value;
@@ -273,8 +295,9 @@ void json_print(c_json *obj, int indent) {
 		}
 		printf("]");
 	} else {
-		json_print_value(&obj->value, indent);
-	}
+	*/
+	json_print_value(&obj->value, indent);
+
 	printf("\n");
 
 	if (obj->next) {

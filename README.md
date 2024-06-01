@@ -1,7 +1,6 @@
+# c-json
 
-## c-json
-
-# TODO
-- [ ] fix array structure
+## TODO
+- [x] fix array structure
 - [ ] c_json iterator
 - [ ] get value by key
